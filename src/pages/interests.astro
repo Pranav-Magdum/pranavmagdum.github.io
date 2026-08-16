@@ -1,0 +1,147 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Interests" description="Interests outside of academics.">
+
+	<section class="interests-hero">
+		<div class="interests-hero-inner">
+			<p class="hero-kicker">Interests</p>
+			<h1>Outside the Books</h1>
+		</div>
+	</section>
+
+	<section class="interests-body">
+		<div class="interests-columns">
+
+			<div class="interests-col">
+				<div class="interests-section">
+					<h2>Reading</h2>
+					<p>I like reading books.</p>
+					<p>This is where I'll keep books I'm reading, books I've liked, books I want to read, and any short thoughts about them.</p>
+				</div>
+
+				<div class="interests-section">
+					<h2>Movies</h2>
+					<p>I like watching movies.</p>
+					<p>Films I've liked, films I want to watch, directors I keep coming back to, and short thoughts about particular movies will go here.</p>
+				</div>
+			</div>
+
+			<div class="interests-divider" aria-hidden="true"></div>
+
+			<div class="interests-col">
+				<div class="interests-section interests-section--visual">
+					<h2>Sketching</h2>
+					<p>I like sketching.</p>
+					<div class="sketches-placeholder">
+						<p class="sketches-note">This space will eventually hold sketches and images.</p>
+					</div>
+				</div>
+
+				<div class="interests-section">
+					<h2>Rabbit Holes</h2>
+					<p>I like going down random rabbit holes.</p>
+					<p>Random things I become interested in and end up spending far too much time reading about. Strange questions, historical rabbit holes, scientific ideas, things I randomly became curious about.</p>
+				</div>
+			</div>
+
+		</div>
+	</section>
+
+</Layout>
+
+<style>
+	.interests-hero {
+		padding: 4.25rem 0 2.75rem;
+	}
+
+	.interests-hero-inner {
+		max-width: 56rem;
+		margin: 0 auto;
+		padding: 0 2.5rem;
+	}
+
+	.interests-body {
+		padding: 0 0 4rem;
+	}
+
+	.interests-columns {
+		max-width: 72rem;
+		margin: 0 auto;
+		padding: 0 2.5rem;
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+		gap: 0 3.5rem;
+	}
+
+	.interests-divider {
+		width: 1px;
+		background: var(--border);
+		align-self: stretch;
+	}
+
+	.interests-section {
+		margin-bottom: 3rem;
+	}
+
+	.interests-section:last-child {
+		margin-bottom: 0;
+	}
+
+	.interests-section h2 {
+		margin-bottom: 1rem;
+	}
+
+	.interests-section p {
+		color: var(--ink-soft);
+	}
+
+	.interests-section--visual {
+		min-height: 16rem;
+	}
+
+	.sketches-placeholder {
+		margin-top: 1.2rem;
+		min-height: 10rem;
+		border: 1px dashed var(--border);
+		border-radius: var(--radius);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 2rem;
+	}
+
+	.sketches-note {
+		font-family: var(--font-sans);
+		font-size: 0.82rem;
+		color: var(--muted);
+		text-align: center;
+	}
+
+	@media (max-width: 40rem) {
+		.interests-hero-inner,
+		.interests-columns {
+			padding: 0 1.5rem;
+		}
+
+		.interests-columns {
+			grid-template-columns: 1fr;
+			gap: 0;
+		}
+
+		.interests-divider {
+			display: none;
+		}
+
+		.interests-section + .interests-section {
+			margin-top: 2.5rem;
+			padding-top: 2.5rem;
+			border-top: 1px solid var(--border);
+		}
+
+		.interests-section--visual {
+			min-height: auto;
+		}
+	}
+</style>

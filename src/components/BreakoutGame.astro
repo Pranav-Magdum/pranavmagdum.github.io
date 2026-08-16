@@ -1,0 +1,445 @@
+---
+---
+
+<canvas class="breakout-canvas" aria-label="AI agent playing Breakout"></canvas>
+
+<script>
+(function () {
+  const canvas = document.querySelector('.breakout-canvas') as HTMLCanvasElement;
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const W = 800;
+  const H = 500;
+  const BRICK_ROWS = 5;
+  const BRICK_COLS = 10;
+  const BRICK_W = W / BRICK_COLS;
+  const BRICK_H = 18;
+  const BRICK_TOP = 50;
+  const BRICK_PAD = 2;
+  const BALL_R = 6;
+  const BALL_SPEED = 5;
+  const PADDLE_H = 10;
+  const PADDLE_OFFSET = 35;
+
+  const BG = '#13110e';
+  const CREAM = '#eae3d6';
+  const GOLD = '#c9a95f';
+  const GOLD_DIM = '#a08840';
+
+  const BRICK_COLORS = [
+    '#6b2d3e',
+    '#7a4a2e',
+    '#4a5a3a',
+    '#5a3a5a',
+    '#6a5a38',
+  ];
+
+  let ballX = W / 2;
+  let ballY = H - 60;
+  let ballVX = BALL_SPEED * 0.65;
+  let ballVY = -BALL_SPEED;
+  let paddleX = W / 2;
+  let bricks: number[][] = [];
+  let score = 0;
+  let lives = 3;
+  let alive = true;
+  let resetTimer = 0;
+  let ballTrail: { x: number; y: number }[] = [];
+
+  // AI state
+  let aiTargetX = W / 2;
+  let aiNoise = 0;
+  let aiNoiseTimer = 0;
+  let aiCooldown = 0;
+
+  // Particle system for brick hits
+  interface Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    life: number;
+    color: string;
+  }
+  let particles: Particle[] = [];
+
+  function paddleW() { return W * 0.12; }
+  function halfPaddle() { return paddleW() / 2; }
+
+  function init() {
+    ballX = W / 2;
+    ballY = H - 60;
+    const angle = (-Math.PI / 4) + Math.random() * (-Math.PI / 2);
+    ballVX = BALL_SPEED * Math.cos(angle);
+    ballVY = BALL_SPEED * Math.sin(angle);
+    paddleX = W / 2;
+    alive = true;
+    resetTimer = 0;
+    ballTrail = [];
+    particles = [];
+    aiCooldown = 60;
+
+    bricks = [];
+    for (let r = 0; r < BRICK_ROWS; r++) {
+      bricks[r] = [];
+      for (let c = 0; c < BRICK_COLS; c++) {
+        bricks[r][c] = r < 1 ? 2 : 1;
+      }
+    }
+  }
+
+  function resetBall() {
+    ballX = W / 2;
+    ballY = H - 60;
+    const angle = (-Math.PI / 4) + Math.random() * (-Math.PI / 2);
+    ballVX = BALL_SPEED * Math.cos(angle);
+    ballVY = BALL_SPEED * Math.sin(angle);
+    alive = true;
+    resetTimer = 0;
+    ballTrail = [];
+    aiCooldown = 60;
+  }
+
+  function spawnParticles(x: number, y: number, color: string) {
+    if (prefersReducedMotion) return;
+    for (let i = 0; i < 6; i++) {
+      particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 3,
+        vy: (Math.random() - 0.5) * 3,
+        life: 1,
+        color,
+      });
+    }
+  }
+
+  function updateAI() {
+    if (!alive || aiCooldown > 0) { aiCooldown--; return; }
+
+    const movingDown = ballVY > 0;
+    const hw = halfPaddle();
+
+    if (movingDown && ballVY > 0.5) {
+      const dy = PADDLE_OFFSET - ballY;
+      const t = dy / ballVY;
+      if (t > 0) {
+        let predictedX = ballX + ballVX * t;
+        // Account for wall bounces
+        while (predictedX < 0 || predictedX > W) {
+          if (predictedX < 0) predictedX = -predictedX;
+          if (predictedX > W) predictedX = 2 * W - predictedX;
+        }
+        aiNoiseTimer += 0.016;
+        if (aiNoiseTimer > 1.5 + Math.random() * 2) {
+          aiNoise = (Math.random() - 0.5) * paddleW() * 0.3;
+          aiNoiseTimer = 0;
+        }
+        aiTargetX = predictedX + aiNoise;
+      }
+    } else {
+      aiTargetX = W / 2 + Math.sin(Date.now() * 0.0008) * W * 0.1;
+    }
+
+    // Smooth pursuit with variable speed
+    const diff = aiTargetX - paddleX;
+    const absDiff = Math.abs(diff);
+    const speed = 0.08 + Math.min(absDiff / W, 0.12);
+    paddleX += diff * speed;
+    paddleX = Math.max(hw + 4, Math.min(W - hw - 4, paddleX));
+  }
+
+  function tick() {
+    // Update AI
+    updateAI();
+
+    if (!alive) {
+      resetTimer++;
+      if (resetTimer > 90) {
+        if (lives > 0) {
+          resetBall();
+        } else {
+          score = 0;
+          lives = 3;
+          init();
+        }
+      }
+      return;
+    }
+
+    // Ball trail
+    if (!prefersReducedMotion) {
+      ballTrail.push({ x: ballX, y: ballY });
+      if (ballTrail.length > 12) ballTrail.shift();
+    }
+
+    // Move ball
+    ballX += ballVX;
+    ballY += ballVY;
+
+    // Wall collisions
+    if (ballX - BALL_R < 0) { ballX = BALL_R; ballVX = Math.abs(ballVX); }
+    if (ballX + BALL_R > W) { ballX = W - BALL_R; ballVX = -Math.abs(ballVX); }
+    if (ballY - BALL_R < 0) { ballY = BALL_R; ballVY = Math.abs(ballVY); }
+
+    // Paddle collision
+    const hw = halfPaddle();
+    const pw = paddleW();
+    if (ballVY > 0 &&
+        ballY + BALL_R >= H - PADDLE_OFFSET &&
+        ballY + BALL_R <= H - PADDLE_OFFSET + PADDLE_H + 4 &&
+        ballX >= paddleX - hw - 4 &&
+        ballX <= paddleX + hw + 4) {
+      const rel = (ballX - paddleX) / hw;
+      const clamped = Math.max(-0.95, Math.min(0.95, rel));
+      const angle = clamped * (Math.PI / 3);
+      const speed = Math.sqrt(ballVX * ballVX + ballVY * ballVY);
+      ballVX = speed * Math.sin(angle);
+      ballVY = -speed * Math.cos(angle);
+      ballY = H - PADDLE_OFFSET - BALL_R;
+      // Ensure minimum vertical speed
+      if (Math.abs(ballVY) < 2) ballVY = ballVY < 0 ? -2 : 2;
+    }
+
+    // Brick collisions
+    for (let r = 0; r < BRICK_ROWS; r++) {
+      for (let c = 0; c < BRICK_COLS; c++) {
+        if (bricks[r][c] <= 0) continue;
+        const bx = c * BRICK_W + BRICK_PAD;
+        const by = BRICK_TOP + r * (BRICK_H + BRICK_PAD);
+        const bw = BRICK_W - BRICK_PAD * 2;
+        const bh = BRICK_H;
+
+        if (ballX + BALL_R > bx && ballX - BALL_R < bx + bw &&
+            ballY + BALL_R > by && ballY - BALL_R < by + bh) {
+          bricks[r][c]--;
+          if (bricks[r][c] <= 0) {
+            score += (BRICK_ROWS - r) * 10;
+            spawnParticles(bx + bw / 2, by + bh / 2, BRICK_COLORS[r]);
+          }
+
+          const overlapLeft = (ballX + BALL_R) - bx;
+          const overlapRight = (bx + bw) - (ballX - BALL_R);
+          const overlapTop = (ballY + BALL_R) - by;
+          const overlapBottom = (by + bh) - (ballY - BALL_R);
+          const minOverlapX = Math.min(overlapLeft, overlapRight);
+          const minOverlapY = Math.min(overlapTop, overlapBottom);
+
+          if (minOverlapX < minOverlapY) {
+            ballVX = -ballVX;
+          } else {
+            ballVY = -ballVY;
+          }
+          // Ensure ball doesn't get stuck going horizontal
+          if (Math.abs(ballVY) < 1) ballVY = ballVY < 0 ? -1.5 : 1.5;
+          break;
+        }
+      }
+    }
+
+    // Ball lost
+    if (ballY - BALL_R > H + 20) {
+      alive = false;
+      lives--;
+      resetTimer = 0;
+    }
+
+    // Update particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.08;
+      p.life -= 0.03;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+  }
+
+  function draw() {
+    ctx.fillStyle = BG;
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle scanline effect
+    ctx.fillStyle = 'rgba(255,255,255,0.008)';
+    for (let y = 0; y < H; y += 4) {
+      ctx.fillRect(0, y, W, 1);
+    }
+
+    // Bricks
+    for (let r = 0; r < BRICK_ROWS; r++) {
+      for (let c = 0; c < BRICK_COLS; c++) {
+        if (bricks[r][c] <= 0) continue;
+        const x = c * BRICK_W + BRICK_PAD;
+        const y = BRICK_TOP + r * (BRICK_H + BRICK_PAD);
+        const w = BRICK_W - BRICK_PAD * 2;
+
+        ctx.fillStyle = BRICK_COLORS[r];
+        ctx.fillRect(x, y, w, BRICK_H);
+
+        // Highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.07)';
+        ctx.fillRect(x, y, w, 2);
+      }
+    }
+
+    // Particles
+    for (const p of particles) {
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+
+    // Ball trail
+    if (!prefersReducedMotion) {
+      for (let i = 0; i < ballTrail.length; i++) {
+        const t = ballTrail[i];
+        const alpha = (i / ballTrail.length) * 0.15;
+        ctx.fillStyle = `rgba(201,169,95,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, BALL_R * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Ball glow + ball
+    if (!prefersReducedMotion) {
+      ctx.shadowColor = GOLD;
+      ctx.shadowBlur = 12;
+    }
+    ctx.fillStyle = CREAM;
+    ctx.beginPath();
+    ctx.arc(ballX, ballY, BALL_R, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Paddle
+    const hw = halfPaddle();
+    const pw = paddleW();
+    const py = H - PADDLE_OFFSET;
+
+    if (!prefersReducedMotion) {
+      ctx.shadowColor = GOLD;
+      ctx.shadowBlur = 8;
+    }
+    const grad = ctx.createLinearGradient(paddleX - hw, py, paddleX + hw, py);
+    grad.addColorStop(0, GOLD_DIM);
+    grad.addColorStop(0.5, GOLD);
+    grad.addColorStop(1, GOLD_DIM);
+    ctx.fillStyle = grad;
+    ctx.fillRect(paddleX - hw, py, pw, PADDLE_H);
+    ctx.shadowBlur = 0;
+
+    // Paddle highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(paddleX - hw + 2, py, pw - 4, 2);
+
+    // Bottom line
+    ctx.fillStyle = 'rgba(201,169,95,0.12)';
+    ctx.fillRect(0, H - 2, W, 2);
+
+    // Game over overlay
+    if (!alive && lives <= 0) {
+      ctx.fillStyle = 'rgba(19,17,14,0.85)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = CREAM;
+      ctx.font = '500 28px "Fraunces", serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Training complete.', W / 2, H / 2 - 12);
+      ctx.font = '14px "Inter", sans-serif';
+      ctx.fillStyle = GOLD_DIM;
+      ctx.fillText('Restarting...', W / 2, H / 2 + 22);
+      ctx.textAlign = 'start';
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    // UI overlay
+    ctx.fillStyle = CREAM;
+    ctx.font = '12px "Inter", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Score: ' + score, 14, 24);
+
+    // Lives as small dots
+    ctx.textAlign = 'right';
+    for (let i = 0; i < lives; i++) {
+      ctx.fillStyle = GOLD;
+      ctx.beginPath();
+      ctx.arc(W - 16 - i * 16, 21, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
+
+    // AI status indicator
+    if (alive) {
+      ctx.fillStyle = GOLD_DIM;
+      ctx.font = '10px "Inter", sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('● AI ACTIVE', W - 14, 44);
+      ctx.textAlign = 'start';
+    }
+  }
+
+  let lastFrame = 0;
+  function loop(ts: number) {
+    const dt = lastFrame ? Math.min(ts - lastFrame, 50) : 16;
+    lastFrame = ts;
+    tick();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // Input: mouse
+  function onMouseMove(e: MouseEvent) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    paddleX = (e.clientX - rect.left) * scaleX;
+    paddleX = Math.max(halfPaddle() + 4, Math.min(W - halfPaddle() - 4, paddleX));
+  }
+
+  // Input: touch
+  function onTouchMove(e: TouchEvent) {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const touch = e.touches[0];
+    paddleX = (touch.clientX - rect.left) * scaleX;
+    paddleX = Math.max(halfPaddle() + 4, Math.min(W - halfPaddle() - 4, paddleX));
+  }
+
+  // Resize: scale canvas to fit container
+  function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const parent = canvas.parentElement;
+    if (!parent) return;
+    const maxW = parent.clientWidth;
+    const aspect = W / H;
+    let displayW = maxW;
+    let displayH = maxW / aspect;
+    if (displayH > window.innerHeight * 0.65) {
+      displayH = window.innerHeight * 0.65;
+      displayW = displayH * aspect;
+    }
+    canvas.style.width = displayW + 'px';
+    canvas.style.height = displayH + 'px';
+  }
+
+  canvas.addEventListener('mousemove', onMouseMove, { passive: true });
+  canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+  canvas.addEventListener('touchstart', onTouchMove, { passive: false });
+  canvas.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+
+  window.addEventListener('resize', resize, { passive: true });
+  resize();
+  init();
+  requestAnimationFrame(loop);
+})();
+</script>

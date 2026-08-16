@@ -1,0 +1,130 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Academic" description="Academic interests and research.">
+
+	<section class="academic-hero">
+		<div class="academic-hero-inner">
+			<p class="hero-kicker">Academic</p>
+			<h1>Interests</h1>
+			<p class="hero-lede">
+				A few things I'm interested in. This will probably keep changing.
+			</p>
+		</div>
+	</section>
+
+	<section class="academic-body">
+		<div class="academic-columns">
+
+			<div class="academic-col">
+				<h2>Physics</h2>
+
+				<h3>Particle Physics</h3>
+				<p>Particle physics is something I want to understand properly. I'm mostly interested in the theoretical side of it and the mathematics behind it.</p>
+				<p>There's a lot here that I haven't figured out yet, so this is very much a work in progress.</p>
+
+				<h3>Theorem Proving for Physics</h3>
+				<p>I've been working with Lean and got interested in formalizing physics with it.</p>
+				<p>I like that you can't just say "this is obvious" and move on. You actually have to make the whole argument work.</p>
+				<p>I'm interested in seeing how far this can be taken for actual physics.</p>
+
+				<h3>Papers I Find Interesting</h3>
+				<p>Papers I've come across that I want to keep around.</p>
+				<p>Some I'll understand, some I probably won't.</p>
+			</div>
+
+			<div class="academic-divider" aria-hidden="true"></div>
+
+			<div class="academic-col">
+				<h2>Machine Learning</h2>
+
+				<h3>ML and Neuroscience</h3>
+				<p>I've been reading about ML ideas that are inspired by neuroscience.</p>
+				<p>The interesting question for me is which ideas from the brain are actually useful for ML, rather than just making an architecture sound biologically inspired.</p>
+
+				<h3>Reinforcement Learning</h3>
+				<p>I've been getting more into RL recently.</p>
+				<p>I like the basic setup: an agent interacts with an environment and has to figure out what to do.</p>
+				<p>Then you get into exploration, credit assignment, planning, representations, etc. and things get a lot more interesting.</p>
+
+				<h3>World Models</h3>
+				<p>World models are something I've been thinking about quite a bit.</p>
+				<p>The idea is basically that an agent learns some model of its environment and can use it to predict what happens next.</p>
+				<p>I'm interested in how these models actually learn useful representations of the world and what you can do with them.</p>
+
+				<h3>Papers I Find Interesting</h3>
+				<p>A list of ML papers I've found interesting.</p>
+				<p>I'll add to this as I find more.</p>
+			</div>
+
+		</div>
+	</section>
+
+</Layout>
+
+<style>
+	.academic-hero {
+		padding: 4.25rem 0 2.75rem;
+	}
+
+	.academic-hero-inner {
+		max-width: 56rem;
+		margin: 0 auto;
+		padding: 0 2.5rem;
+	}
+
+	.academic-body {
+		padding: 0 0 4rem;
+	}
+
+	.academic-columns {
+		max-width: 72rem;
+		margin: 0 auto;
+		padding: 0 2.5rem;
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+		gap: 0 3.5rem;
+	}
+
+	.academic-divider {
+		width: 1px;
+		background: var(--border);
+		align-self: stretch;
+	}
+
+	.academic-col h2 {
+		margin-bottom: 1.6rem;
+	}
+
+	.academic-col h3 {
+		margin-top: 1.8em;
+		margin-bottom: 0.4em;
+	}
+
+	.academic-col p {
+		color: var(--ink-soft);
+	}
+
+	@media (max-width: 40rem) {
+		.academic-hero-inner,
+		.academic-columns {
+			padding: 0 1.5rem;
+		}
+
+		.academic-columns {
+			grid-template-columns: 1fr;
+			gap: 0;
+		}
+
+		.academic-divider {
+			display: none;
+		}
+
+		.academic-col + .academic-col {
+			margin-top: 2.5rem;
+			padding-top: 2.5rem;
+			border-top: 1px solid var(--border);
+		}
+	}
+</style>

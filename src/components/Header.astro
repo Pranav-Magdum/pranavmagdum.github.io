@@ -1,0 +1,28 @@
+---
+import { url } from '../lib/url';
+
+const cleanPath = Astro.url.pathname.replace(/\/+$/, '');
+const links = [
+	{ href: url('/'), label: 'Home' },
+	{ href: url('/academic'), label: 'Academic' },
+	{ href: url('/interests'), label: 'Interests' },
+	{ href: url('/blog'), label: 'Blog' },
+	{ href: url('/about'), label: 'About' },
+];
+---
+
+<header class="site-header">
+	<div class="site-header-inner">
+		<a href={url('/')} class="brand">Pranav Magdum</a>
+		<nav class="nav" aria-label="Main">
+			{links.map((link) => {
+				const isCurrent = !link.href.includes('#') && cleanPath === link.href.replace(/\/+$/, '');
+				return (
+					<a href={link.href} aria-current={isCurrent ? 'page' : undefined}>
+						{link.label}
+					</a>
+				);
+			})}
+		</nav>
+	</div>
+</header>

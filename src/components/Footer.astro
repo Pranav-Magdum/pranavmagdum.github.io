@@ -1,0 +1,19 @@
+---
+import { url } from '../lib/url';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+	<div class="container footer-inner">
+		<div class="footer-colophon">
+			<span>© {year} Pranav Magdum</span>
+			<span class="footer-note">Set in Fraunces · Built with Astro</span>
+		</div>
+		<div class="footer-links">
+			<a href="https://github.com/Pranav-Magdum" target="_blank" rel="noopener noreferrer">GitHub</a>
+			<a href="mailto:pranavmagdum118@gmail.com">Email</a>
+			<a href={url('/rss.xml')}>RSS</a>
+		</div>
+	</div>
+</footer>

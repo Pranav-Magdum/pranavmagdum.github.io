@@ -1,0 +1,62 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="About" description="About Pranav Magdum.">
+
+	<section class="about-hero">
+		<div class="about-hero-inner">
+			<p class="hero-kicker">About</p>
+			<h1>About</h1>
+		</div>
+	</section>
+
+	<section class="about-body">
+		<div class="about-content">
+			<p>I'm Pranav, a student at IISER Pune studying physics.</p>
+			<p>Most of my time ends up somewhere around physics, mathematics, and computation. Lately I've been spending a lot of time thinking about particle physics, theorem proving, machine learning, reinforcement learning, and world models.</p>
+			<p>I like learning things by going down rabbit holes and usually end up somewhere I didn't expect to.</p>
+			<p>Outside of that, I read, watch movies, sketch, and occasionally spend far too much time on some completely random topic.</p>
+			<p>This website is basically a place to keep track of some of those things.</p>
+		</div>
+	</section>
+
+</Layout>
+
+<style>
+	.about-hero {
+		padding: 4.25rem 0 2.75rem;
+	}
+
+	.about-hero-inner {
+		max-width: 56rem;
+		margin: 0 auto;
+		padding: 0 2.5rem;
+	}
+
+	.about-body {
+		padding: 0 0 4rem;
+	}
+
+	.about-content {
+		max-width: 40rem;
+		margin: 0 auto;
+		padding: 0 2.5rem;
+	}
+
+	.about-content p {
+		color: var(--ink-soft);
+		line-height: 1.75;
+	}
+
+	.about-content p + p {
+		margin-top: 1.2em;
+	}
+
+	@media (max-width: 40rem) {
+		.about-hero-inner,
+		.about-content {
+			padding: 0 1.5rem;
+		}
+	}
+</style>
