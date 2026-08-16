@@ -7,7 +7,6 @@ import rehypeKatex from 'rehype-katex';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://pranav-magdum.github.io',
-  base: '/personal-website',
   markdown: {
     processor: unified({
       remarkPlugins: [remarkMath],
